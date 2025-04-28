@@ -70,6 +70,7 @@ jobs:
             -Dsonar.projectKey=sareemfarooqui10_DevOps
             -Dsonar.organization=sareemfarooqui10
             -Dsonar.projectName=DevOps
+            -Dsonar.analysis.ci=false
             -Dsonar.sources=.
             -Dsonar.language=js # Change based on your language
             -Dsonar.sourceEncoding=UTF-8
