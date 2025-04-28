@@ -61,3 +61,16 @@ jobs:
           cd dependency-check/bin
           ./dependency-check.sh --scan ../.. --format ALL --nvdApiKey ${{ secrets.NVD_API_KEY }}
 #OWASP done using NVD API key, which is a public API key. Collects vulnerable data from this NVD database and  helps in scanning our files against that data       
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=YOUR_PROJECT_KEY
+            -Dsonar.projectName="Your Project Name"
+            -Dsonar.sources=.
+            -Dsonar.language=js # Change based on your language
+            -Dsonar.sourceEncoding=UTF-8
+            -Dsonar.javascript.node.maxspace=4096
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
