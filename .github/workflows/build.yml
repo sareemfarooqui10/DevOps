@@ -67,8 +67,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=YOUR_PROJECT_KEY
-            -Dsonar.projectName="Your Project Name"
+            -Dsonar.projectKey=sareemfarooqui10_DevOps
+            -Dsonar.organization=sareemfarooqui10
+            -Dsonar.projectName=DevOps
             -Dsonar.sources=.
             -Dsonar.language=js # Change based on your language
             -Dsonar.sourceEncoding=UTF-8
