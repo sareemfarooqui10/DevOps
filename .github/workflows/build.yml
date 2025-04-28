@@ -1,0 +1,63 @@
+name: Build, Analyze, Scan
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-analyze-scan:
+    name: Build, Analyze, and Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Disable shallow clone for better SonarQube analysis
+
+      # - name: Build and analyze with SonarQube
+      #   uses: sonarsource/sonarqube-scan-action@master
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} # no SONARQUBE for now
+      # OWASP, Trivy done
+      #any token is never placed here due to confidentiality bcz this file goes public, kind of makes sure of confidentiality
+      #no token for Trivy, doesnt check quality of good code practices, just scans the code files
+      #Aqua Trivy(at the time of deployemnt), scans image
+      - name: Install and run Trivy
+        run: |
+          echo "Installing Trivy..."
+          sudo apt-get install wget apt-transport-https gnupg lsb-release -y
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy -y
+          echo "Running Trivy scan..."
+          trivy fs . 
+
+      - name: Install and run Snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }} #things which you do not expose get stored in GitHub Secrets
+        run: |
+          echo "Installing Snyk..."
+          npm install -g snyk
+
+          echo "Authenticating Snyk..."
+          snyk auth "${SNYK_TOKEN}"
+
+          echo "Running Snyk test..."
+          snyk test --all-projects
+
+          echo "RMonitoring project with Snyk..."
+          snyk monitor --all-projects
+#logged into Snyk, authenticated using token
+      - name: Install and run OWASP Dependency-Check
+        run: |
+          echo "Downloading and installing OWASP Dependency-Check..."
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v12.1.0/dependency-check-12.1.0-release.zip
+          unzip dependency-check-12.1.0-release.zip
+          echo "Running OWASP Dependency-Check scan..."
+          cd dependency-check/bin
+          ./dependency-check.sh --scan ../.. --format ALL --nvdApiKey ${{ secrets.NVD_API_KEY }}
+#OWASP done using NVD API key, which is a public API key. Collects vulnerable data from this NVD database and  helps in scanning our files against that data       
