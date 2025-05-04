@@ -84,3 +84,11 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/demo:latest
         env:
           DOCKER_CLI_ACI: 1
+  deploy:
+    needs: build-analyze-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull the docker image
+        run: docker pull sareemfarooqui10/demo:latest
+      - name: Trivy image scan
+        run: trivy image sareemfarooqui10/demo:lates
