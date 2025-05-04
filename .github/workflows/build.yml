@@ -17,10 +17,17 @@ jobs:
           fetch-depth: 0 # Disable shallow clone for better SonarQube analysis
 
       - name: Build and analyze with SonarQube
-        uses: sonarsource/sonarqube-scan-action@master
+        uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} # no SONARQUBE for now
+        with:
+          args: >
+            -Dsonar.projectKey=sareemfarooqui10_DevOps
+            -Dsonar.organization=sareemfarooqui10
+            -Dsonar.projectName=DevOps
+            -Dsonar.sources=.
+            -Dsonar.language=js
+            -Dsonar.sourceEncoding=UTF-8
       # OWASP, Trivy done
       #any token is never placed here due to confidentiality bcz this file goes public, kind of makes sure of confidentiality
       #no token for Trivy, doesnt check quality of good code practices, just scans the code files
