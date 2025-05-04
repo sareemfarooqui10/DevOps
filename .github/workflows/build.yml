@@ -12,15 +12,15 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Disable shallow clone for better SonarQube analysis
 
-      # - name: Build and analyze with SonarQube
-      #   uses: sonarsource/sonarqube-scan-action@master
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} # no SONARQUBE for now
+      - name: Build and analyze with SonarQube
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }} # no SONARQUBE for now
       # OWASP, Trivy done
       #any token is never placed here due to confidentiality bcz this file goes public, kind of makes sure of confidentiality
       #no token for Trivy, doesnt check quality of good code practices, just scans the code files
@@ -76,25 +76,63 @@ jobs:
             -Dsonar.sourceEncoding=UTF-8
             -Dsonar.javascript.node.maxspace=4096
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-  build-push:
+  security-scan-and-deploy:
+    needs: build-analyze-scan
+    name: Scan & Deploy
     runs-on: ubuntu-latest
+    env:
+      DOCKER_IMAGE: ${{ secrets.DOCKER_HUB_USERNAME }}/devsecops-demo
+      TAG: ${{ github.sha }}
+
     steps:
-      # ... (existing security scan steps) ...
+    # --- STAGE 1: Code Checkout ---
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required for SonarQube
 
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/devsecops-demo:${{ github.sha }} .
+    # --- STAGE 2: Security Scans (Your Existing Setup) ---
 
-      - name: Scan image with Trivy (optional)
-        run: |
-          trivy image --exit-code 1 --severity CRITICAL ${{ secrets.DOCKER_HUB_USERNAME }}/devsecops-demo:${{ github.sha }}
+    - name: Run Snyk Scan
+      run: |
+        npm install -g snyk
+        snyk auth ${{ secrets.SNYK_TOKEN }}
+        snyk test --all-projects --fail-on=upgradable --severity-threshold=high
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+    - name: OWASP Dependency Check
+      run: |
+        wget -q https://github.com/jeremylong/DependencyCheck/releases/download/v12.1.0/dependency-check-8.3.1-release.zip
+        unzip -q dependency-check-*.zip
+        ./dependency-check/bin/dependency-check.sh --scan . --format HTML --out reports/
+    - name: Upload OWASP Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-check-report
+        path: reports/
+    # --- STAGE 3: Docker Build & Security Scan ---
+    - name: Validate Dockerfile
+      run: 'test -f Dockerfile || echo "ERROR: Dockerfile missing" && exit 1'
+    - name: Build Docker image
+      run: |
+        docker build -t $DOCKER_IMAGE:$TAG -t $DOCKER_IMAGE:latest .
+        docker images  # Demo: Show built image
 
-      - name: Push to Docker Hub
-        run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/devsecops-demo:${{ github.sha }}
+    - name: Scan Docker image with Trivy
+      run: |
+        trivy image --exit-code 1 --severity CRITICAL $DOCKER_IMAGE:$TAG
+        trivy image --format table $DOCKER_IMAGE:$TAG  # Demo: Pretty output
+
+    # --- STAGE 4: Push to Docker Hub (Only on main branch) ---
+    - name: Login to Docker Hub
+      if: github.ref == 'refs/heads/main'
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+    - name: Push to Docker Hub
+      if: github.ref == 'refs/heads/main'
+      run: |
+        docker push $DOCKER_IMAGE:$TAG
+        docker push $DOCKER_IMAGE:latest
+        echo "Image pushed: https://hub.docker.com/r/$DOCKER_IMAGE"
