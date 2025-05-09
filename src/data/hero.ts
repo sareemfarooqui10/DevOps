@@ -1,5 +1,5 @@
 export const heroDetails = {
     heading: 'DevOps project presented by DevOps Batch 21K',
-    subheading: 'From effortless budgeting to real-time investment insights, Finwise puts you in control of your money like never before',
+    subheading: 'This was a demo project for the DevOps Batch 21K',
     centerImageSrc: '/images/hero-mockup.webp',
 }
