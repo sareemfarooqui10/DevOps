@@ -1,6 +1,6 @@
 export const heroDetails = {
 =======
-    heading: 'Procom project presented by DevOps Batch 21K',
+    heading: 'Devops project presented by DevOps Batch 21K',
     subheading: 'From effortless budgeting to real-time investment insights, Finwise puts you in control of your money like never before',
 >>>>>>> 54b2adc (demo-commit)
     centerImageSrc: '/images/hero-mockup.webp',
