@@ -7,7 +7,7 @@ export const footerDetails: {
     telephone: string;
     socials: ISocials;
 } = {
-    subheading: "Empowering businesses with cutting-edge financial technology solutions.",
+    subheading: "About to graduate from FAST NUCES KHI",
     quickLinks: [
         {
             text: "Features",
@@ -22,7 +22,7 @@ export const footerDetails: {
             url: "#testimonials"
         }
     ],
-    email: 'address@yoursite.com',
+    email: 'k213381@nu.edu.pk',
     telephone: '+1 (123) 456-7890',
     socials: {
         // github: 'https://github.com',
