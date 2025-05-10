@@ -1,5 +1,7 @@
 export const heroDetails = {
-    heading: 'Another try to commit and push the code on May 10 at 12:31 AM',
-    subheading: 'This was a demo project for the DevOps Batch 21K',
+=======
+    heading: 'Procom project presented by DevOps Batch 21K',
+    subheading: 'From effortless budgeting to real-time investment insights, Finwise puts you in control of your money like never before',
+>>>>>>> 54b2adc (demo-commit)
     centerImageSrc: '/images/hero-mockup.webp',
-}
+} 
